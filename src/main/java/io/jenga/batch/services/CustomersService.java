@@ -21,19 +21,9 @@ public class CustomersService {
     public void updateCustomers() {
 
         try {
-
             List<Customers> customers = customerRepository.findByStatus(0);
-
             if (customers.size()!= 0) {
-
-                if (customers.size() > 2) {
-                    List<Customers> limitedCustomerNumber = customers.subList(0, 2);
-                    updateRecords(limitedCustomerNumber);
-
-                } else {
-                    updateRecords(customers);
-
-                }
+                updateRecords(customers);
             } else {
                 System.out.println("Finished Reading Records================");
             }
@@ -44,22 +34,22 @@ public class CustomersService {
 
     }
 
-    private void updateRecords(List<Customers> limitedCustomerNumber) {
+    private void updateRecords(List<Customers> customers) {
 
-        for (Customers cst : limitedCustomerNumber) {
+        for (Customers cst : customers) {
             cst.setStatus(1);
             customerRepository.save(cst);
-
             System.out.println("Update Record================" + cst.getId());
+            sendIPN(cst);
         }
-        System.out.println("Updated Result Set========================" + limitedCustomerNumber.size());
-        sendIPN(limitedCustomerNumber);
+        System.out.println("Updated Result Set========================" + customers.size());
+
     }
 
-    private void sendIPN (List<Customers> limitedCustomerNumber) {
-        System.out.println("Web hook initialized with data ========================" + limitedCustomerNumber);
+    private void sendIPN (Customers customers) {
+        System.out.println("Web hook initialized with data ========================" + customers);
         try {
-            IPNThread ipnThread = new IPNThread(limitedCustomerNumber);
+            IPNThread ipnThread = new IPNThread(customers);
             Thread t = new Thread(ipnThread);
             t.start();
 

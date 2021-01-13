@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -18,10 +19,10 @@ public class IPNThread implements Runnable {
     @Value("${ipn.url}")
     private String ipnUrl;
 
-    private List<Customers> limitedCustomerNumber;
+    private Customers customerData;
 
-    public IPNThread(List<Customers> limitedCustomerNumber) {
-        this.limitedCustomerNumber = limitedCustomerNumber;
+    public IPNThread(Customers customers) {
+        this.customerData = customers;
     }
 
     @Override
@@ -29,29 +30,24 @@ public class IPNThread implements Runnable {
 
         System.out.println("Preparing IPN request*************************");
 
-
-        List<CustomerDTO> customers = new ArrayList<>();
-        for(Customers cust: limitedCustomerNumber) {
-            CustomerDTO customerDTO = new CustomerDTO();
-            customerDTO.setFirst_name(cust.getFirst_name());
-            customerDTO.setSecond_name(cust.getSecond_name());
-            customers.add(customerDTO);
-            System.out.println("Sending IPN request*************************" + customerDTO);
-        }
+        CustomerDTO customerDTO = new CustomerDTO();
+        customerDTO.setFirst_name(customerData.getFirst_name());
+        customerDTO.setSecond_name(customerData.getSecond_name());
+        System.out.println("Sending IPN request*************************" + customerDTO);
 
         try {
-
-            String url = "https://webhook.site/f81ba7de-a6a9-4953-8a2e-5076df462ead";
+            String url = ipnUrl;
             RestTemplate restTemplate = new RestTemplate();
+            restTemplate.setRequestFactory(new SimpleClientHttpRequestFactory());
+            SimpleClientHttpRequestFactory rf = (SimpleClientHttpRequestFactory) restTemplate
+                    .getRequestFactory();
+            rf.setReadTimeout(10000);
+            rf.setConnectTimeout(5000);
 
-            HttpEntity httpEntity = new HttpEntity<>(customers);
-
+            HttpEntity httpEntity = new HttpEntity<>(customerDTO);
             System.out.println("making http call for IPN: "+ url);
-
             ResponseEntity<ResponseDTO> responseDto = restTemplate.exchange(url, HttpMethod.POST, httpEntity, ResponseDTO.class);
-
-            System.out.println("IPN Created......");
-           // System.out.println("Response: "+ Objects.requireNonNull(responseDto.getBody()).getCode()+" "+responseDto.getBody().getStatus());
+            System.out.println("IPN Created......" +responseDto);
 
         }catch (Exception e){
 

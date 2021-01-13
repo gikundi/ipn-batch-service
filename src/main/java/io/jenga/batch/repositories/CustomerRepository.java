@@ -12,7 +12,7 @@ import java.util.List;
 public interface CustomerRepository extends JpaRepository<Customers, Long> {
 
     @Query("SELECT c FROM Customers c WHERE c.status = :status")
-    public List<Customers> findByStatus(@Param("status") Integer status);
+     List<Customers> findByStatus(@Param("status") Integer status);
 
 
 }
